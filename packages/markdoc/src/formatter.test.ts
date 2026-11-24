@@ -203,6 +203,13 @@ paragraph 2
     });
   });
 
+  it('image descriptions', () => {
+    check('![foo *bar*](/url)', '![foo bar](/url)\n');
+    check('![a&amp;b](/url)', '![a\\&b](/url)\n');
+    stable('![a \\*b\\* \\[c\\]](/url)\n');
+    stable('![x {% $a_b %} *y*](/url)\n');
+  });
+
   it('complex attributes', () => {
     const source = `{% if $gates["<string_key>"].test["@var"] id="id with space" class="class with space" /%}`;
     const expected = `{% if

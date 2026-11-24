@@ -271,6 +271,22 @@ describe('Markdown parser', () => {
       expect(image.attributes.alt).toBe('foo');
     });
 
+    it('for image with inline markup in the description', () => {
+      const alt = (source: string) =>
+        convert(source).children[0].children[0].children[0].attributes.alt;
+      expect(alt('![foo *bar*](/url)')).toBe('foo bar');
+      expect(alt('![a `b` [c](/x)](/url)')).toBe('a b c');
+      expect(alt('![a ![b](/x)](/url)')).toBe('a b');
+      expect(alt('![a&amp;b \\*c](/url)')).toBe('a&b *c');
+      expect(alt('![a\nb](/url)')).toBe('a\nb');
+    });
+
+    it('for image with a variable in the description', () => {
+      const document = convert(`![x {% $v %} *y*](/url)`);
+      const image = document.children[0].children[0].children[0];
+      expect(image.attributes.alt).toBe('x {% $v %} *y*');
+    });
+
     it('for table with alignments', () => {
       const document = convert(`
       | Left | Center | Right |

@@ -177,7 +177,11 @@ function* formatNode(n: Node, o: Options = {}) {
     case 'image': {
       yield '!';
       yield '[';
-      yield* formatValue(n.attributes.alt, no);
+      // Descriptions with variables or tags keep their source text as `alt`
+      yield* typeof n.attributes.alt === 'string' &&
+      !n.attributes.alt.includes(OPEN)
+        ? escapeMarkdownCharacters(n.attributes.alt, /[\\[\]*_~`<&]/g)
+        : formatValue(n.attributes.alt, no);
       yield ']';
       yield '(';
       yield* typeof n.attributes.src === 'string'

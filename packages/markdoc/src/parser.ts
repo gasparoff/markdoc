@@ -53,6 +53,38 @@ function annotate(node: Node, attributes: AttributeValue[]) {
   }
 }
 
+// CommonMark uses the plain-text content of the image description as `alt`.
+// Descriptions containing Markdoc variables or tags keep their source text.
+function imageAlt(token: Token): string {
+  const text = (tokens: Token[]): string | undefined => {
+    let result = '';
+    for (const child of tokens) {
+      if (child.meta) return undefined;
+      switch (child.type) {
+        case 'text':
+        case 'code_inline':
+        case 'html_inline':
+          result += child.content;
+          break;
+        case 'softbreak':
+        case 'hardbreak':
+          result += '\n';
+          break;
+        case 'image': {
+          const nested = text(child.children ?? []);
+          if (nested === undefined) return undefined;
+          result += nested;
+          break;
+        }
+      }
+    }
+    return result;
+  };
+
+  if (!token.children) return token.content ?? '';
+  return text(token.children) ?? token.content ?? '';
+}
+
 function handleAttrs(token: Token, type: string) {
   switch (type) {
     case 'heading':
@@ -73,9 +105,10 @@ function handleAttrs(token: Token, type: string) {
     }
     case 'image': {
       const attrs = Object.fromEntries(token.attrs ?? []);
+      const alt = imageAlt(token);
       return attrs.title
-        ? { alt: token.content, src: attrs.src, title: attrs.title }
-        : { alt: token.content, src: attrs.src };
+        ? { alt, src: attrs.src, title: attrs.title }
+        : { alt, src: attrs.src };
     }
     case 'em':
     case 'strong':
